@@ -95,9 +95,10 @@ module round_robin_arbiter_with_2_requests #(
       .requests(maskedReq),
       .grants  (maskedGrant)
   );
-
+  // MUX output
   assign grants = (maskedReq == 'b0) ? unmaskedGrant : maskedGrant;
 
+  // shift pointer (change pointer mask directly, without using external pointer)
   always_comb begin
     reg found;
     if (grants == 'd0) begin
@@ -113,26 +114,6 @@ module round_robin_arbiter_with_2_requests #(
       end
     end
   end
-
-  // always @(*) begin
-  //     integer i;
-  //     reg found;
-  //     if (grants == 'd0) begin
-  //         nextPointerMask = pointerMask;
-  //     end else begin
-  //         nextPointerMask = { N { 1'b1 } };
-  //         found = 0;
-  //         for (i = 0; i < N; i = i + 1) begin
-  //             if (!found) begin
-  //                 nextPointerMask[i] = 1'b0;
-  //                 if (grants[i]) begin
-  //                     found = 1;
-  //                 end
-  //             end
-  //         end
-  //     end
-  // end
-
 
   always_ff @(posedge clk) begin
     if (rst) pointerMask <= '1;

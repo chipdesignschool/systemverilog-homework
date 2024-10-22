@@ -49,6 +49,17 @@ module serial_adder_using_logic_operations_only
   // for information about the 1-bit full adder implementation.
   //
   // See the testbench for the output format ($display task).
+ 
+  logic carry;
+  wire carry_d;
 
+  assign sum = a ^ b ^ carry;
+  assign carry_d = (a & b) || (a && carry) || (b && carry);
 
+  always_ff @ (posedge clk)
+    if (rst)
+      carry <= '0;
+    else
+      carry <= carry_d; 
+      
 endmodule

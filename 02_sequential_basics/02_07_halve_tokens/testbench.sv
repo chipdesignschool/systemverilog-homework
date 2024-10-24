@@ -82,10 +82,10 @@ module testbench;
         begin
             $display("FAIL %s", `__FILE__);
             $display("++ INPUT    => {%s}",
-                             `PB(n_orig_tokens));
+                             `PD(n_orig_tokens));
 
             $display("++ TEST     => {%s, %s}",
-                             `PB(n_orig_tokens), `PB(n_half_tokens));
+                             `PD(n_orig_tokens), `PD(n_half_tokens));
             $finish(1);
         end
 

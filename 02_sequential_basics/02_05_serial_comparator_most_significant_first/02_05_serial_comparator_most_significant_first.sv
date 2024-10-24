@@ -53,7 +53,6 @@ module serial_comparator_most_significant_first (
   //
   // See the testbench for the output format ($display task).
   
-
   logic prev_a_eq_b, prev_a_less_b, prev_a_greater_b;
 
   assign a_eq_b      = prev_a_eq_b & (a == b);
@@ -71,38 +70,5 @@ module serial_comparator_most_significant_first (
       prev_a_less_b <= a_less_b;
       prev_a_greater_b <= a_greater_b;
     end
-
-
-  // // compare current result
-  // logic a_eq_b_cur, a_greater_b_cur, a_less_b_cur, comp_happened;
-  // // store first inequlaty happen
-  // logic a_less_b_end, a_eq_b_end, a_greater_b_end;
-  // assign a_eq_b_end = a_eq_b_cur && ~(a_less_b_end || a_greater_b_end);
-
-  // assign a_eq_b      = a_eq_b_end;
-  // assign a_less_b    = a_less_b_end;
-  // assign a_greater_b = a_greater_b_end;
-
-  // // compare cuurent bit
-  // assign a_less_b_cur = (~a & b);
-  // assign a_eq_b_cur = (a == b);
-  // assign a_greater_b_cur = (~a_less_b_cur) & (~a_eq_b_cur);
-  // // since comparison is MSB first, first comp_happen has to be last comp_happened
-  // assign comp_happened = a_less_b_cur || a_greater_b_cur;
-  // logic comp_last;
-
-  // always_latch begin
-  //   if (rst) begin
-  //     a_less_b_end    <= 'b0;
-  //     a_greater_b_end <= 'b0;
-  //     comp_last <= 'b0;
-  //   end else begin
-  //     if (comp_happened && ~comp_last) begin
-  //       a_less_b_end <= a_less_b_cur;
-  //       a_greater_b_end <= a_greater_b_cur;
-  //       comp_last <= 1;
-  //     end
-  //   end
-  // end
 
 endmodule

@@ -80,7 +80,8 @@ module testbench;
                 in_vld_cnt <= in_vld_cnt + 1'b1;
 
                 queue.push_back (serial_data);
-            end            
+            end
+
             if (parallel_valid)
             begin
                 out_vld_cnt <= out_vld_cnt + 1'b1;
@@ -135,7 +136,7 @@ module testbench;
 
         while (current_inputs != n_inputs)
         begin
-            d_serial_valid = 1' ($urandom());
+            d_serial_valid = (current_inputs <= 24) | 1' ($urandom());
             current_inputs += 32' (d_serial_valid);
             { serial_valid, serial_data } <= { d_serial_valid, 1' ($urandom())};
 

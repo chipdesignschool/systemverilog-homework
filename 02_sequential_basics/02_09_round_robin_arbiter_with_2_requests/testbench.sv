@@ -1,11 +1,18 @@
 `include "../include/util.svh"
 
 module testbench;
-
+  integer seed;
   logic clk;
 
   initial
   begin
+    if ($value$plusargs("SEED=%d", seed)) begin
+        $display("Using SEED=%0d from command line", seed);
+    end else begin
+        $display("Using seed random");
+        seed = $time; // Fallback if no command-line seed is given
+    end
+
     clk = '0;
 
     forever
@@ -41,9 +48,9 @@ module testbench;
 
   //--------------------------------------------------------------------------
 
-  localparam n = 32;
+  localparam n = 64;
 
-  // `define GENERATE
+  `define GENERATE
 
   `ifdef GENERATE
 
@@ -59,7 +66,7 @@ module testbench;
 
       for (int i = 0; i < n; i ++)
       begin
-        { req_1 [i], req_0 [i] } = $urandom;
+        { req_1 [i], req_0 [i] } = $urandom(seed);
 
         requests <= { req_1 [i], req_0 [i] };
 
@@ -68,7 +75,10 @@ module testbench;
         { grant_1 [i], grant_0 [i] } = grants;
       end
 
-      $display ("%b %b %b %b", req_0, req_1, grant_0, grant_1);
+      $display ("%b", req_0);
+      $display ("%b", req_1);
+      $display ("%b", grant_0);
+      $display ("%b", grant_1);
       $finish;
     end
 

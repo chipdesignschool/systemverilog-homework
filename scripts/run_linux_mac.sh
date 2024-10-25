@@ -4,7 +4,6 @@
 
 waveform_viewer="gtkwave"
 # waveform_viewer="surfer"
-
 #-----------------------------------------------------------------------------
 
 simulate_rtl()
@@ -27,39 +26,69 @@ simulate_rtl()
 
     if [ -d testbenches ]
     then
-        iverilog -g2005-sv        \
-                 -o sim.out       \
-                 -I testbenches   \
-                 testbenches/*.sv \
-                 black_boxes/*.sv \
-                 ./*.sv           \
-                 >> log.txt 2>&1  \
-                 && vvp sim.out   \
-                 >> log.txt 2>&1
-
+        if [ -n "$GENSEED" ]; then
+            iverilog -g2005-sv        \
+                    -o sim.out       \
+                    -I testbenches   \
+                    testbenches/*.sv \
+                    black_boxes/*.sv \
+                    ./*.sv           \
+                    >> log.txt 2>&1  \
+                    && vvp sim.out   \
+                    >> log.txt 2>&1  \
+                    +SEED=$GENSEED
+        else
+            iverilog -g2005-sv        \
+                    -o sim.out       \
+                    -I testbenches   \
+                    testbenches/*.sv \
+                    black_boxes/*.sv \
+                    ./*.sv           \
+                    >> log.txt 2>&1  \
+                    && vvp sim.out   \
+                    >> log.txt 2>&1
+        fi
         rm -f sim.out
     elif [ -f tb.sv ]
     then
-        iverilog -g2005-sv       \
-                 -o sim.out      \
-                 ./*sv           \
-                 >> log.txt 2>&1 \
-                 && vvp sim.out  \
-                 >> log.txt 2>&1
-
+        if [ -n "$GENSEED" ]; then
+            iverilog -g2005-sv       \
+                    -o sim.out      \
+                    ./*sv           \
+                    >> log.txt 2>&1 \
+                    && vvp sim.out  \
+                    >> log.txt 2>&1 \
+                    +SEED=$GENSEED
+        else
+            iverilog -g2005-sv       \
+                    -o sim.out      \
+                    ./*sv           \
+                    >> log.txt 2>&1 \
+                    && vvp sim.out  \
+                    >> log.txt 2>&1 
+        fi
         rm -f sim.out
     else
         for d in */
         do
             if [ ! -d "$d"testbenches ]
             then
-                iverilog -g2005-sv          \
-                         -o "$d"sim.out     \
-                         "$d"*.sv           \
-                         >> log.txt 2>&1    \
-                         && vvp "$d"sim.out \
-                         >> log.txt 2>&1
-
+                if [ -n "$GENSEED" ]; then
+                    iverilog -g2005-sv          \
+                            -o "$d"sim.out     \
+                            "$d"*.sv           \
+                            >> log.txt 2>&1    \
+                            && vvp "$d"sim.out \
+                            >> log.txt 2>&1    \
+                            +SEED=$GENSEED
+                else
+                    iverilog -g2005-sv          \
+                            -o "$d"sim.out     \
+                            "$d"*.sv           \
+                            >> log.txt 2>&1    \
+                            && vvp "$d"sim.out \
+                            >> log.txt 2>&1
+                fi
                 rm -f "$d"sim.out
             fi
         done
@@ -241,27 +270,36 @@ if [ -f program.s ] ; then
     run_assembly
 fi
 
-simulate_rtl
 
-while getopts ":lw-:" opt
-do
+RUN_LINT=false
+OPEN_WAVE=false
+GENERATE_RANDOM=false
+
+# Parse options and set flags
+while getopts ":lw-:" opt; do
     case $opt in
         -)
             case $OPTARG in
                 lint)
-                    lint_code;;
+                    RUN_LINT=true;;
                 wave)
-                    open_waveform;;
+                    OPEN_WAVE=true;;
+                random)
+                    GENERATE_RANDOM=true;;
+                seed=*)
+                    SEED_VALUE="${OPTARG#*=}";;
                 *)
                     printf "ERROR: Unknown option\n"
                     printf "Press enter\n"
                     read -r enter
-                    exit 1
+                    exit 1;;
             esac;;
         l)
-            lint_code;;
+            RUN_LINT=true;;
         w)
-            open_waveform;;
+            OPEN_WAVE=true;;
+        r)
+            GENERATE_RANDOM=true;;
         ?)
             printf "ERROR: Unknown option\n"
             printf "Press enter\n"
@@ -270,6 +308,34 @@ do
     esac
 done
 
+# Set seed if `--seed` is specified; if `--random` is also set, `--seed` takes precedence
+if [ -n "$SEED_VALUE" ]; then
+    GENSEED=$SEED_VALUE
+    echo "Using seed value $GENSEED"
+elif [ "$GENERATE_RANDOM" = true ]; then
+    GENSEED=$RANDOM
+    echo "Using seed value $GENSEED"
+fi
+
+# Run the main simulation
+simulate_rtl
+
+# Run post-simulation actions
+if [ "$RUN_LINT" = true ]; then
+    lint_code
+fi
+
+if [ "$OPEN_WAVE" = true ]; then
+    open_waveform
+fi
+
 #-----------------------------------------------------------------------------
 
-grep -e PASS -e FAIL -e ERROR -e Error -e error -e Timeout -e ++ log.txt | sed -e 's/PASS/\x1b[0;32m&\x1b[0m/g' -e 's/FAIL/\x1b[0;31m&\x1b[0m/g'
+grep -e PASS -e FAIL -e ERROR -e Error -e error -e Timeout -e "++" log.txt | \
+sed -e 's/PASS/\x1b[0;32m&\x1b[0m/g' \
+    -e 's/FAIL/\x1b[0;31m&\x1b[0m/g' \
+    -e 's/ERROR/\x1b[0;31m&\x1b[0m/g' \
+    -e 's/Error/\x1b[0;31m&\x1b[0m/g' \
+    -e 's/error/\x1b[0;31m&\x1b[0m/g' \
+    -e 's/Timeout/\x1b[0;33m&\x1b[0m/g' \
+    -e 's/++/\x1b[0;34m&\x1b[0m/g'

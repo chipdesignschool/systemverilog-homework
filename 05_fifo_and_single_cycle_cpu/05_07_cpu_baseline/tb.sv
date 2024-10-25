@@ -71,7 +71,7 @@ module tb;
             // Uncomment the following `define
             // to generate a VCD file and analyze it using GTKwave
 
-            $dumpvars;
+            // $dumpvars;
         `endif
 
         regAddr <= 5'd10;  // a0 register used for I/O

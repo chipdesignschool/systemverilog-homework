@@ -1,13 +1,19 @@
 `include "../include/util.svh"
 
 module testbench;
-
+    integer seed;
     // Clock and reset
 
     logic clk;
 
     initial
     begin
+        if ($value$plusargs("SEED=%d", seed)) begin
+            $display("Using SEED=%0d from command line", seed);
+        end else begin
+            $display("Using seed random");
+            seed = $time; // Fallback if no command-line seed is given
+        end
         clk = '0;
 
         forever
@@ -70,6 +76,11 @@ module testbench;
         end
         else if (was_reset)
         begin
+            if (serial_valid) begin
+                in_vld_cnt <= in_vld_cnt + 1'b1;
+
+                queue.push_back (serial_data);
+            end            
             if (parallel_valid)
             begin
                 out_vld_cnt <= out_vld_cnt + 1'b1;
@@ -98,12 +109,6 @@ module testbench;
                         $finish (1);
                     end
                 end
-            end
-
-            if (serial_valid) begin
-                in_vld_cnt <= in_vld_cnt + 1'b1;
-
-                queue.push_back (serial_data);
             end
         end
     end

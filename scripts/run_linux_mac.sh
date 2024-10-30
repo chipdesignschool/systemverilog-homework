@@ -100,6 +100,7 @@ simulate_rtl()
     fi
 
     rm -f dump.vcd
+    rm -f dump.wlf
     rm -f log.txt
 
     if [ -d testbenches ]

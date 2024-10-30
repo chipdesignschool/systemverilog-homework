@@ -2,8 +2,7 @@
 // Task
 //----------------------------------------------------------------------------
 
-module halve_tokens
-(
+module halve_tokens (
     input  clk,
     input  rst,
     input  a,
@@ -18,21 +17,18 @@ module halve_tokens
     // Example:
     // a -> 110_011_101_000_1111
     // b -> 010_001_001_000_0101
-    logic [1:0] a_buf;
-    logic b_prev;
+    logic a_buf;
 
-    assign b = ((a_buf == 2'b11) && ~b_prev) || ((a_buf == 2'b11) && ~a);
+    assign b = a_buf && a;
 
-    always_ff @( posedge clk) begin 
-        if(rst) begin
+    always_ff @(posedge clk) begin
+        if (rst) begin
             a_buf <= 'b0;
-            b_prev <= 'b0;
-        end else begin 
-            b_prev <= b;
-            a_buf = {a_buf[0], a};
+        end else begin
+            if (a) a_buf = a_buf ^ 1;
         end
     end
 
-    
+
 
 endmodule

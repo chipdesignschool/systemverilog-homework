@@ -50,7 +50,7 @@ module testbench;
 
   localparam n = 64;
 
-  `define GENERATE
+  // `define GENERATE
 
   `ifdef GENERATE
 
@@ -66,7 +66,7 @@ module testbench;
 
       for (int i = 0; i < n; i ++)
       begin
-        { req_1 [i], req_0 [i] } = $urandom(seed);
+        { req_1 [i], req_0 [i] } = $urandom();
 
         requests <= { req_1 [i], req_0 [i] };
 

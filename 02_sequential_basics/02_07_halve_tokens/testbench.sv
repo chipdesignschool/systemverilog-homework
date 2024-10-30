@@ -1,11 +1,18 @@
 `include "../include/util.svh"
 
 module testbench;
-
+    integer seed = 100;
     logic clk;
 
     initial
     begin
+        if ($value$plusargs("SEED=%d", seed)) begin
+            $display("Using SEED=%0d from command line", seed);
+        end else begin
+            $display("Using seed random");
+            seed = $time; // Fallback if no command-line seed is given
+        end
+        void'($urandom(seed));
         clk = '0;
 
         forever
@@ -62,12 +69,13 @@ module testbench;
 
             // $dumpvars;
         `endif
-
+        $dumpvars;
         @ (negedge rst);
 
         repeat (100)
         begin
-            a <= 1' ($urandom ());
+            void'($urandom(seed));
+            a <= 1' ($urandom());
             @ (posedge clk);
         end
 

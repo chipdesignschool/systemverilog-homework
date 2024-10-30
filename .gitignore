@@ -1,5 +1,7 @@
 *.hex
 a.out
 dump*.vcd
+dump*.wlf
 log.txt
 lint.txt
+transcript

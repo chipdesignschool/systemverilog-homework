@@ -1,10 +1,88 @@
 #!/bin/sh
 
 #-----------------------------------------------------------------------------
-
-waveform_viewer="gtkwave"
+waveform_viewer="questa"
+# waveform_viewer="gtkwave"
 # waveform_viewer="surfer"
 #-----------------------------------------------------------------------------
+simulate_rtl_questa(){
+    if ! command -v vsim > /dev/null 2>&1
+    then
+        printf "%s\n"                                                \
+               "ERROR: QuestaSim (vsim) is not in the path"          \
+               "or cannot be run."                                   \
+               "See README.md file in the package directory"         \
+               "for instructions on how to install QuestaSim."       \
+               "Press enter"
+
+        read -r enter
+        exit 1
+    fi
+
+    rm -f dump.vcd
+    rm -f dump.wlf
+    rm -f log.txt
+    rm -rf work
+    vlib work
+
+    # Set default top module if not specified
+    if [ -z "$TOP_MODULE" ]; then
+        TOP_MODULE=testbench
+    fi
+
+    if [ -d testbenches ]
+    then
+        # Compile the source files with signal access (+acc)
+        vlog +acc testbenches/*.sv black_boxes/*.sv ./*.sv >> log.txt 2>&1
+        if [ $? -eq 0 ]; then
+            # Run simulation and generate VCD
+            if [ -n "$GENSEED" ]; then
+                vsim -c -do "run -all; exit" \
+                     $TOP_MODULE +SEED=$GENSEED >> log.txt 2>&1
+            else
+                vsim -c -do "run -all; exit" \
+                     $TOP_MODULE >> log.txt 2>&1
+            fi
+        fi
+    elif [ -f tb.sv ]
+    then
+        # Compile with +acc for signal access
+        vlog +acc ./*.sv >> log.txt 2>&1
+        if [ $? -eq 0 ]; then
+            if [ -n "$GENSEED" ]; then
+                vsim -c -do "run -all; exit" \
+                     $TOP_MODULE +SEED=$GENSEED >> log.txt 2>&1
+            else
+                vsim -c -do "run -all; exit" \
+                     $TOP_MODULE >> log.txt 2>&1
+            fi
+        fi
+    else
+        for d in */; do
+            # Skip directories that do not contain .sv files
+            if [ -n "$(find "$d" -maxdepth 1 -name '*.sv' -print -quit)" ] && [ ! -d "$d"testbenches ]; then
+                # Compile with +acc for signal access
+                vlog +acc "$d"*.sv >> log.txt 2>&1
+                if [ $? -eq 0 ]; then
+                    if [ -n "$GENSEED" ]; then
+                        vsim -c -do "run -all; exit" \
+                             $TOP_MODULE +SEED=$GENSEED >> log.txt 2>&1
+                    else
+                        vsim -c -do "run -all; exit" \
+                             $TOP_MODULE >> log.txt 2>&1
+                    fi
+                fi
+            fi
+        done
+    fi
+
+    # Clean up the work directory
+    rm -rf work
+
+    # Remove unwanted messages from log.txt
+    sed -i '/finish called/d' log.txt
+}
+
 
 simulate_rtl()
 {
@@ -256,6 +334,15 @@ open_waveform()
             else
                 surfer dump.vcd &
             fi
+        elif [ "$waveform_viewer" = "questa" ]
+        then
+            vcd2wlf dump.vcd dump.wlf
+            if [ -f questa.tcl ]
+            then
+              vsim -gui -view dump.wlf -do questa.tcl &
+            else
+              vsim -gui -view dump.wlf &
+            fi
         fi
 
     else
@@ -263,6 +350,7 @@ open_waveform()
         printf "Check that it's generated in testbench for this exercise\n\n"
     fi
 }
+
 
 #-----------------------------------------------------------------------------
 
@@ -288,6 +376,8 @@ while getopts ":lw-:" opt; do
                     GENERATE_RANDOM=true;;
                 seed=*)
                     SEED_VALUE="${OPTARG#*=}";;
+                simulator=*)
+                    SIMULATOR="${OPTARG#*=}";;
                 *)
                     printf "ERROR: Unknown option\n"
                     printf "Press enter\n"
@@ -296,11 +386,11 @@ while getopts ":lw-:" opt; do
             esac;;
         l)
             RUN_LINT=true;;
-        w)
-            OPEN_WAVE=true;;
         r)
             GENERATE_RANDOM=true;;
-        ?)
+        w)
+            OPEN_WAVE=true;;
+        *)
             printf "ERROR: Unknown option\n"
             printf "Press enter\n"
             read -r enter
@@ -318,7 +408,11 @@ elif [ "$GENERATE_RANDOM" = true ]; then
 fi
 
 # Run the main simulation
+if [ "$SIMULATOR" == "questa" ]; then
+simulate_rtl_questa
+else
 simulate_rtl
+fi
 
 # Run post-simulation actions
 if [ "$RUN_LINT" = true ]; then
@@ -331,11 +425,13 @@ fi
 
 #-----------------------------------------------------------------------------
 
-grep -e PASS -e FAIL -e ERROR -e Error -e error -e Timeout -e "++" log.txt | \
+grep -e PASS -e FAIL -e ERROR -e Error -e error -e Timeout -e warning -e "++" log.txt | \
+grep -v -e '^#.*Errors:' -e '^#.*Warnings:' -e '^Errors:' -e '^Warnings:' | \
 sed -e 's/PASS/\x1b[0;32m&\x1b[0m/g' \
     -e 's/FAIL/\x1b[0;31m&\x1b[0m/g' \
     -e 's/ERROR/\x1b[0;31m&\x1b[0m/g' \
     -e 's/Error/\x1b[0;31m&\x1b[0m/g' \
     -e 's/error/\x1b[0;31m&\x1b[0m/g' \
+    -e 's/warning/\x1b[0;31m&\x1b[0m/g' \
     -e 's/Timeout/\x1b[0;33m&\x1b[0m/g' \
     -e 's/++/\x1b[0;34m&\x1b[0m/g'

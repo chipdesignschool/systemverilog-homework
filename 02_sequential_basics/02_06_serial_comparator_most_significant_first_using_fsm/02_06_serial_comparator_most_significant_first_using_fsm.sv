@@ -89,14 +89,14 @@ module serial_comparator_most_significant_first_using_fsm (
     new_state = state;
     case (state)
       st_equal: begin
-        if (~a & b) new_state <= st_a_less_b;
-        else if (a & ~b) new_state <= st_a_greater_b;
+        if      (~a & b)  new_state = st_a_less_b;
+        else if (a & ~b)  new_state = st_a_greater_b;
       end
       st_a_less_b: begin
       end
       st_a_greater_b: begin
       end
-      default: new_state <= st_equal;
+      default: new_state = st_equal;
     endcase
   end
 

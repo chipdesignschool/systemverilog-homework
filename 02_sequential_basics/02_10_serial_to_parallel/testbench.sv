@@ -14,6 +14,7 @@ module testbench;
             $display("Using seed random");
             seed = $time; // Fallback if no command-line seed is given
         end
+        void'($urandom(seed));
         clk = '0;
 
         forever
@@ -129,6 +130,7 @@ module testbench;
 
             // $dumpvars;
         `endif
+        // $dumpvars;
 
         { serial_valid, serial_data } <= '0;
 

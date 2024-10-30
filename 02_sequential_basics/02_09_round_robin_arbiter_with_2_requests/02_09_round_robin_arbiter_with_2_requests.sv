@@ -74,7 +74,7 @@ module round_robin_arbiter_with_2_requests #(
     // requests -> 01 00 10 11 11 00 11 00 11 11
     // grants   -> 01 00 10 01 10 00 01 00 10 01
     `define EXACT
-    //`define UNIVERSAL
+    // `define UNIVERSAL
 
 `ifdef EXACT
     logic pointer_req, next_pointer_req;
@@ -82,14 +82,14 @@ module round_robin_arbiter_with_2_requests #(
     always_comb begin
         case (pointer_req)
             1'b0: begin
-            if (requests[0]) grants <= 2'b01;
-            else if (requests[1]) grants <= 2'b10;
-            else grants <= 2'b00;
+                if (requests[0]) grants         = 2'b01;
+                else if (requests[1]) grants    = 2'b10;
+                else grants                     = 2'b00;
             end
             1'b1: begin
-            if (requests[1]) grants <= 2'b10;
-            else if (requests[0]) grants <= 2'b01;
-            else grants <= 2'b00;
+                if (requests[1]) grants         = 2'b10;
+                else if (requests[0]) grants    = 2'b01;
+                else grants                     = 2'b00;
             end
         endcase
     end
@@ -100,10 +100,11 @@ module round_robin_arbiter_with_2_requests #(
     end
 
     always_comb begin
-        next_pointer_req <= 2'b00;
-        casez (grants)
-            2'b01: next_pointer_req <= 1'b1;
-            2'b10: next_pointer_req <= 1'b0;
+        next_pointer_req = 2'b00;
+        case (grants)
+            2'b01: next_pointer_req   = 1'b1;
+            2'b10: next_pointer_req   = 1'b0;
+            default: next_pointer_req = 1'b0;
         endcase 
     end
 `endif

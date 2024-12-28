@@ -2,8 +2,7 @@
 // Task
 //----------------------------------------------------------------------------
 
-module double_tokens
-(
+module double_tokens (
     input        clk,
     input        rst,
     input        a,
@@ -24,6 +23,24 @@ module double_tokens
     // Example:
     // a -> 10010011000110100001100100
     // b -> 11011011110111111001111110
+    logic [8:0] counter;
 
+    always_ff @(posedge clk) begin
+        if (rst) begin
+            counter  <= '0;
+            overflow <= '0;
+        end else begin
+            if (counter[8]) begin
+                overflow <= 1'b1;
+            end
+            if (a) begin
+                counter += 1;
+            end else if (counter > 0) begin
+                counter -= 1;
+            end
+        end
+    end
+
+    assign b = (overflow) | (counter > 0) | a;
 
 endmodule

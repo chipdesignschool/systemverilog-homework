@@ -87,9 +87,8 @@ module testbench;
             $display("FAIL %s", `__FILE__);
             $display("++ INPUT    => {%s}",
                              `PD(n_orig_tokens));
-
-            $display("++ TEST     => {%s}",
-                             `PD(n_double_tokens));
+            $display("++ TEST     => {%s, %s}",
+                             `PD(n_orig_tokens), `PD(n_double_tokens));
             $finish(1);
         end
 

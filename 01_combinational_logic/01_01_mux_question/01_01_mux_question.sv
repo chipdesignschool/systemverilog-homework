@@ -23,10 +23,13 @@ module mux_4_1
   input  [1:0] sel,
   output [3:0] y
 );
-
   // Task:
   // Using code for mux_2_1 as an example,
   // write code for 4:1 mux using "?:" operator
-
+  wire [3:0] d0d1, d2d3;
+  assign d0d1 = sel[0] ? d1 : d0;
+  assign d2d3 = sel[0] ? d3 : d2;
+  assign y = sel[1] ? d2d3 : d0d1;
+  // assign y = sel[1] ? (sel[0] ? d3 : d2) : (sel[0] ? d1 : d0);
 
 endmodule

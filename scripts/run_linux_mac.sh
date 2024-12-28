@@ -1,11 +1,88 @@
 #!/bin/sh
 
 #-----------------------------------------------------------------------------
-
-waveform_viewer="gtkwave"
+waveform_viewer="questa"
+# waveform_viewer="gtkwave"
 # waveform_viewer="surfer"
-
 #-----------------------------------------------------------------------------
+simulate_rtl_questa(){
+    if ! command -v vsim > /dev/null 2>&1
+    then
+        printf "%s\n"                                                \
+               "ERROR: QuestaSim (vsim) is not in the path"          \
+               "or cannot be run."                                   \
+               "See README.md file in the package directory"         \
+               "for instructions on how to install QuestaSim."       \
+               "Press enter"
+
+        read -r enter
+        exit 1
+    fi
+
+    rm -f dump.vcd
+    rm -f dump.wlf
+    rm -f log.txt
+    rm -rf work
+    vlib work
+
+    # Set default top module if not specified
+    if [ -z "$TOP_MODULE" ]; then
+        TOP_MODULE=testbench
+    fi
+
+    if [ -d testbenches ]
+    then
+        # Compile the source files with signal access (+acc)
+        vlog +acc testbenches/*.sv black_boxes/*.sv ./*.sv >> log.txt 2>&1
+        if [ $? -eq 0 ]; then
+            # Run simulation and generate VCD
+            if [ -n "$GENSEED" ]; then
+                vsim -c -do "run -all; exit" \
+                     $TOP_MODULE +SEED=$GENSEED >> log.txt 2>&1
+            else
+                vsim -c -do "run -all; exit" \
+                     $TOP_MODULE >> log.txt 2>&1
+            fi
+        fi
+    elif [ -f tb.sv ]
+    then
+        # Compile with +acc for signal access
+        vlog +acc ./*.sv >> log.txt 2>&1
+        if [ $? -eq 0 ]; then
+            if [ -n "$GENSEED" ]; then
+                vsim -c -do "run -all; exit" \
+                     $TOP_MODULE +SEED=$GENSEED >> log.txt 2>&1
+            else
+                vsim -c -do "run -all; exit" \
+                     $TOP_MODULE >> log.txt 2>&1
+            fi
+        fi
+    else
+        for d in */; do
+            # Skip directories that do not contain .sv files
+            if [ -n "$(find "$d" -maxdepth 1 -name '*.sv' -print -quit)" ] && [ ! -d "$d"testbenches ]; then
+                # Compile with +acc for signal access
+                vlog +acc "$d"*.sv >> log.txt 2>&1
+                if [ $? -eq 0 ]; then
+                    if [ -n "$GENSEED" ]; then
+                        vsim -c -do "run -all; exit" \
+                             $TOP_MODULE +SEED=$GENSEED >> log.txt 2>&1
+                    else
+                        vsim -c -do "run -all; exit" \
+                             $TOP_MODULE >> log.txt 2>&1
+                    fi
+                fi
+            fi
+        done
+    fi
+
+    # Clean up the work directory
+    rm -rf work
+
+    # Remove unwanted messages from log.txt
+    sed -i '/finish called/d' log.txt
+}
+
 
 find_common_path()
 {
@@ -102,38 +179,58 @@ simulate_rtl()
     fi
 
     rm -f dump.vcd
+    rm -f dump.wlf
     rm -f log.txt
 
     if [ -d testbenches ]
     then
-        iverilog -g2005-sv               \
-                 -o sim.out              \
-                 -I testbenches          \
-                 -I $common_path         \
-                 testbenches/*.sv        \
-                 $common_path/isqrt/*.sv \
-                 *.sv                    \
-                 >> log.txt 2>&1         \
-                 && vvp sim.out          \
-                 >> log.txt 2>&1
-
+        if [ -n "$GENSEED" ]; then
+            iverilog -g2005-sv        \
+                    -o sim.out       \
+                    -I testbenches   \
+                    testbenches/*.sv \
+                    black_boxes/*.sv \
+                    ./*.sv           \
+                    >> log.txt 2>&1  \
+                    && vvp sim.out   \
+                    >> log.txt 2>&1  \
+                    +SEED=$GENSEED
+        else
+            iverilog -g2005-sv        \
+                    -o sim.out       \
+                    -I testbenches   \
+                    testbenches/*.sv \
+                    black_boxes/*.sv \
+                    ./*.sv           \
+                    >> log.txt 2>&1  \
+                    && vvp sim.out   \
+                    >> log.txt 2>&1
+        fi
         rm -f sim.out
     elif [ -f tb.sv ]
     then
-        iverilog -g2005-sv       \
-                 -o sim.out      \
-                 *sv             \
-                 >> log.txt 2>&1 \
-                 && vvp sim.out  \
-                 >> log.txt 2>&1
-
+        if [ -n "$GENSEED" ]; then
+            iverilog -g2005-sv       \
+                    -o sim.out      \
+                    ./*sv           \
+                    >> log.txt 2>&1 \
+                    && vvp sim.out  \
+                    >> log.txt 2>&1 \
+                    +SEED=$GENSEED
+        else
+            iverilog -g2005-sv       \
+                    -o sim.out      \
+                    ./*sv           \
+                    >> log.txt 2>&1 \
+                    && vvp sim.out  \
+                    >> log.txt 2>&1 
+        fi
         rm -f sim.out
     else
         for d in */
         do
             if [ ! -d "$d"testbenches ]
             then
-
                 if [ -f "$d"testbench.sv ] && grep -q "realtobits" "$d"testbench.sv;
                 then
 
@@ -153,7 +250,20 @@ simulate_rtl()
                             continue
                         fi
                     fi
-
+                    if [ -n "$GENSEED" ]; then
+                    iverilog -g2005-sv                   \
+                             -o "$d"sim.out              \
+                             -I $import_path             \
+                             -I $common_path             \
+                             $import_path/config.vh      \
+                             $import_path/*.sv           \
+                             $common_path/wally_fpu/*.sv \
+                             "$d"*.sv                    \
+                             >> log.txt 2>&1             \
+                             && vvp "$d"sim.out          \
+                             >> log.txt 2>&1             \
+                             +SEED=$GENSEED
+                   else
                     iverilog -g2005-sv                   \
                              -o "$d"sim.out              \
                              -I $import_path             \
@@ -165,16 +275,27 @@ simulate_rtl()
                              >> log.txt 2>&1             \
                              && vvp "$d"sim.out          \
                              >> log.txt 2>&1
+                   fi
                 else
-                    iverilog -g2005-sv                   \
-                             -o "$d"sim.out              \
-                             -I $common_path             \
-                             "$d"*.sv                    \
-                             >> log.txt 2>&1             \
-                             && vvp "$d"sim.out          \
-                             >> log.txt 2>&1
+                    if [ -n "$GENSEED" ]; then
+                      iverilog -g2005-sv                   \
+                               -o "$d"sim.out              \
+                               -I $common_path             \
+                               "$d"*.sv                    \
+                               >> log.txt 2>&1             \
+                               && vvp "$d"sim.out          \
+                               >> log.txt 2>&1             \
+                             +SEED=$GENSEED
+                    else
+                      iverilog -g2005-sv                   \
+                               -o "$d"sim.out              \
+                               -I $common_path             \
+                               "$d"*.sv                    \
+                               >> log.txt 2>&1             \
+                               && vvp "$d"sim.out          \
+                               >> log.txt 2>&1
+                    fi
                 fi
-
                 rm -f "$d"sim.out
             fi
         done
@@ -353,6 +474,15 @@ open_waveform()
             else
                 surfer dump.vcd &
             fi
+        elif [ "$waveform_viewer" = "questa" ]
+        then
+            vcd2wlf dump.vcd dump.wlf
+            if [ -f questa.tcl ]
+            then
+              vsim -gui -view dump.wlf -do questa.tcl &
+            else
+              vsim -gui -view dump.wlf &
+            fi
         fi
 
     else
@@ -361,34 +491,46 @@ open_waveform()
     fi
 }
 
+
 #-----------------------------------------------------------------------------
 
 if [ -f program.s ] ; then
     run_assembly
 fi
 
-simulate_rtl
 
-while getopts ":lw-:" opt
-do
+RUN_LINT=false
+OPEN_WAVE=false
+GENERATE_RANDOM=false
+
+# Parse options and set flags
+while getopts ":lw-:" opt; do
     case $opt in
         -)
             case $OPTARG in
                 lint)
-                    lint_code;;
+                    RUN_LINT=true;;
                 wave)
-                    open_waveform;;
+                    OPEN_WAVE=true;;
+                random)
+                    GENERATE_RANDOM=true;;
+                seed=*)
+                    SEED_VALUE="${OPTARG#*=}";;
+                simulator=*)
+                    SIMULATOR="${OPTARG#*=}";;
                 *)
                     printf "ERROR: Unknown option\n"
                     printf "Press enter\n"
                     read -r enter
-                    exit 1
+                    exit 1;;
             esac;;
         l)
-            lint_code;;
+            RUN_LINT=true;;
+        r)
+            GENERATE_RANDOM=true;;
         w)
-            open_waveform;;
-        ?)
+            OPEN_WAVE=true;;
+        *)
             printf "ERROR: Unknown option\n"
             printf "Press enter\n"
             read -r enter
@@ -396,7 +538,40 @@ do
     esac
 done
 
+# Set seed if `--seed` is specified; if `--random` is also set, `--seed` takes precedence
+if [ -n "$SEED_VALUE" ]; then
+    GENSEED=$SEED_VALUE
+    echo "Using seed value $GENSEED"
+elif [ "$GENERATE_RANDOM" = true ]; then
+    GENSEED=$RANDOM
+    echo "Using seed value $GENSEED"
+fi
+
+# Run the main simulation
+if [ "$SIMULATOR" == "questa" ]; then
+simulate_rtl_questa
+else
+simulate_rtl
+fi
+
+# Run post-simulation actions
+if [ "$RUN_LINT" = true ]; then
+    lint_code
+fi
+
+if [ "$OPEN_WAVE" = true ]; then
+    open_waveform
+fi
+
 #-----------------------------------------------------------------------------
 
-grep -e PASS -e FAIL -e ERROR -e Error -e error -e Timeout -e ++ log.txt \
-    | sed -e 's/PASS/\x1b[0;32m&\x1b[0m/g' -e 's/FAIL/\x1b[0;31m&\x1b[0m/g'
+grep -e PASS -e FAIL -e ERROR -e Error -e error -e Timeout -e warning -e "++" log.txt | \
+grep -v -e '^#.*Errors:' -e '^#.*Warnings:' -e '^Errors:' -e '^Warnings:' | \
+sed -e 's/PASS/\x1b[0;32m&\x1b[0m/g' \
+    -e 's/FAIL/\x1b[0;31m&\x1b[0m/g' \
+    -e 's/ERROR/\x1b[0;31m&\x1b[0m/g' \
+    -e 's/Error/\x1b[0;31m&\x1b[0m/g' \
+    -e 's/error/\x1b[0;31m&\x1b[0m/g' \
+    -e 's/warning/\x1b[0;31m&\x1b[0m/g' \
+    -e 's/Timeout/\x1b[0;33m&\x1b[0m/g' \
+    -e 's/++/\x1b[0;34m&\x1b[0m/g'

@@ -28,10 +28,16 @@ module mux_4_1
   input  [1:0] sel,
   output [3:0] y
 );
-
   // Task:
   // Using code for mux_2_1 as an example,
   // write code for 4:1 mux using array index
-
-
+  logic [3:0] d [0:3];
+  always_comb begin : selectOutput
+    d[0] <= d0;
+    d[1] <= d1;
+    d[2] <= d2;
+    d[3] <= d3;
+  end
+  assign y = d [sel];
+  
 endmodule

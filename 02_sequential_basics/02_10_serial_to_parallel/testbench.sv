@@ -1,13 +1,20 @@
 `include "util.svh"
 
 module testbench;
-
+    integer seed;
     // Clock and reset
 
     logic clk;
 
     initial
     begin
+        if ($value$plusargs("SEED=%d", seed)) begin
+            $display("Using SEED=%0d from command line", seed);
+        end else begin
+            $display("Using seed random");
+            seed = $time; // Fallback if no command-line seed is given
+        end
+        void'($urandom(seed));
         clk = '0;
 
         forever
@@ -125,6 +132,7 @@ module testbench;
 
             // $dumpvars;
         `endif
+        // $dumpvars;
 
         { serial_valid, serial_data } <= '0;
 

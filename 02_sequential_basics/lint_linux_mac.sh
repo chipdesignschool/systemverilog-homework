@@ -1,3 +1,3 @@
 #!/bin/sh
 
-./run_linux_mac.sh --lint
+./run_linux_mac.sh --lint #--random

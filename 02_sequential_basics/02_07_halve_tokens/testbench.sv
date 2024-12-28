@@ -1,4 +1,4 @@
-`include "../include/util.svh"
+`include "util.svh"
 
 module testbench;
     integer seed = 100;
@@ -86,12 +86,11 @@ module testbench;
 
         //--------------------------------------------------------------------
 
-        if (n_half_tokens != n_orig_tokens / 2)
+        if (n_half_tokens !== n_orig_tokens / 2)
         begin
             $display("FAIL %s", `__FILE__);
             $display("++ INPUT    => {%s}",
                              `PD(n_orig_tokens));
-
             $display("++ TEST     => {%s, %s}",
                              `PD(n_orig_tokens), `PD(n_half_tokens));
             $finish(1);

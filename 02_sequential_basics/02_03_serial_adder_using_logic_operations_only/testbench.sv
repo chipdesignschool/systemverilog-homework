@@ -30,11 +30,12 @@ module testbench;
   localparam n = 16;
 
   // Sequence of input values
-  localparam [n - 1:0] seq_a        = 16'b1000_0001_1001_0010;
-  localparam [n - 1:0] seq_b        = 16'b0010_0001_0101_0100;
+  localparam [n - 1:0] seq_a          = 16'b0100_1101_1011_0100;
+  localparam [n - 1:0] seq_b          = 16'b0001_1101_0110_0010;
 
   // Expected sequence of correct output values
-  localparam [n - 1:0] seq_expected   = 16'b1010_0010_1110_0110;
+  localparam [n - 1:0] seq_expected   = 16'b0110_1011_0001_0110;
+                                            
 
   // TODO: If I misstype a variable, I just get nothing as an error?
   initial
@@ -43,7 +44,7 @@ module testbench;
       // Uncomment the following line
       // to generate a VCD file and analyze it using GTKwave or Surfer
 
-      // $dumpvars;
+      $dumpvars;
     `endif
 
     @ (negedge rst);

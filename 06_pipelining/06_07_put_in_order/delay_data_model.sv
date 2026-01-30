@@ -10,7 +10,8 @@
 module delay_data_model
 #(
     parameter width    = 16,
-                n_inputs = 5
+              n_inputs = 5,
+              delay_width = $clog2( n_inputs )
 )
 (
     input                         clk,
@@ -23,8 +24,6 @@ module delay_data_model
     output logic                  vld_out,
     output logic [ width-1 : 0 ]  data_out
 );
-
-    localparam delay_width = $clog2( n_inputs );
 
     logic [ delay_width - 1 : 0 ] delay;
     logic [ width - 1 : 0 ]       data_lock;

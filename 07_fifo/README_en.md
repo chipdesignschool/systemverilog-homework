@@ -1,5 +1,7 @@
 # Practical Assignment №5
 
+> ❗ **DOCUMENT OUTDATED** ❗
+
 Practical assignment №5 consists of 10 exercises: 6 are mandatory and 4 are optional for extra points.
 
 These exercises are divided into 3 subjects  — FIFO, pipelined computational units, and schoolRISCV processor core.

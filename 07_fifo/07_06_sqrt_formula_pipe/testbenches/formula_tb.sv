@@ -4,9 +4,10 @@
 
 module formula_tb
 # (
-    parameter formula = 1,
-              pipe    = 1,
-              fifo    = 0
+    parameter formula  = 1,
+              pipe     = 1,
+              circular = 0,
+              fifo     = 0
 );
 
     `include "formula_1_fn.svh"
@@ -41,19 +42,23 @@ module formula_tb
 
         if (formula == 1 && pipe)
         begin : if_formula_1_pipe
-                   formula_1_pipe               i_formula_1_pipe               (.*);
+                   formula_1_pipe                i_formula_1_pipe                (.*);
         end
         else if (formula == 1 && ! pipe)
         begin : if_formula_1_pipe_aware_fsm
-                   formula_1_pipe_aware_fsm_top i_formula_1_pipe_aware_fsm_top (.*);
+                   formula_1_pipe_aware_fsm_top  i_formula_1_pipe_aware_fsm_top  (.*);
         end
-        else if (! fifo)
-        begin : if_formula_2_pipe
-                   formula_2_pipe               i_formula_2_pipe               (.*);
+        else if ( circular == 1)
+        begin : if_formula_2_pipe_using_circular
+                   formula_2_pipe_using_circular i_formula_2_pipe_using_circular (.*);
+        end
+        else if ( fifo == 1)
+        begin : if_formula_2_pipe_using_fifos
+                   formula_2_pipe_using_fifos    i_formula_2_pipe_using_fifos    (.*);
         end
         else
-        begin : if_formula_2_pipe_using_fifos
-                   formula_2_pipe_using_fifos   i_formula_2_pipe_using_fifos   (.*);
+        begin : if_formula_2_pipe
+                   formula_2_pipe                i_formula_2_pipe                (.*);
         end
 
     endgenerate
@@ -94,8 +99,8 @@ module formula_tb
 
     initial
         if (formula == 2 && pipe)
-            $sformat (test_id, "%s formula %0d pipe %0d fifo %0d:",
-                `__FILE__, formula, pipe, fifo);
+            $sformat (test_id, "%s formula %0d pipe %0d circular %0d fifo %0d:",
+                `__FILE__, formula, pipe, circular, fifo);
         else
             $sformat (test_id, "%s formula %0d pipe %0d:",
                 `__FILE__, formula, pipe);
@@ -395,3 +400,4 @@ module formula_tb
     end
 
 endmodule
+

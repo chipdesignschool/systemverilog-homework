@@ -1,7 +1,7 @@
-module tb;
+module testbench;
 
     localparam fifo_width = 8,
-               fifo_depth = 5,
+               fifo_depth = 8,
                allow_push_when_full_with_pop = 1;
 
     //------------------------------------------------------------------------
@@ -17,7 +17,7 @@ module tb;
 
     //------------------------------------------------------------------------
 
-    flip_flop_fifo_empty_full_optimized
+    ff_fifo_pow2_depth
     # (
         .width (fifo_width),
         .depth (fifo_depth)
@@ -162,7 +162,7 @@ module tb;
 
         //--------------------------------------------------------------------
 
-        $display ("%s PASS", `__FILE__);
+        $display ("PASS %s ", `__FILE__);
         $finish;
     end
 

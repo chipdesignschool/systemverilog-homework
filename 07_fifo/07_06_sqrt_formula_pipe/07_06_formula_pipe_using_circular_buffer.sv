@@ -2,7 +2,7 @@
 // Task
 //----------------------------------------------------------------------------
 
-module formula_2_pipe_using_fifos
+module formula_2_pipe_using_circular
 (
     input         clk,
     input         rst,
@@ -15,10 +15,11 @@ module formula_2_pipe_using_fifos
     output        res_vld,
     output [31:0] res
 );
+
     // Task:
     //
-    // Implement a pipelined module formula_2_pipe_using_fifos that computes the result
-    // of the formula defined in the file formula_2_fn.svh.
+    // Implement a pipelined module formula_2_pipe_using_circular
+    // that computes the result of the formula defined in the file formula_2_fn.svh.
     //
     // The requirements:
     //
@@ -33,13 +34,13 @@ module formula_2_pipe_using_fifos
     // 2. Your solution should instantiate exactly 3 instances
     // of a pipelined isqrt module, which computes the integer square root.
     //
-    // 3. Your solution should use FIFOs instead of shift registers
+    // 3. Your solution should use circular buffers instead of shift registers
     // which were used in 06_04_formula_2_pipe.sv.
     //
     // You can read the discussion of this problem
     // in the article by Yuri Panchul published in
     // FPGA-Systems Magazine :: FSM :: Issue ALFA (state_0)
-    // You can download this issue from https://fpga-systems.ru/fsm
+    // You can download this issue from https://fpga-systems.ru/fsm#state_0
 
 
 endmodule

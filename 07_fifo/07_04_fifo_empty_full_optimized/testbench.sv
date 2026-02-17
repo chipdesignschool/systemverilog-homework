@@ -1,4 +1,4 @@
-module tb;
+module testbench;
 
     localparam fifo_width = 8,
                fifo_depth = 5,
@@ -17,7 +17,7 @@ module tb;
 
     //------------------------------------------------------------------------
 
-    ff_fifo_with_reg_empty_full
+    flip_flop_fifo_empty_full_optimized
     # (
         .width (fifo_width),
         .depth (fifo_depth)
@@ -162,7 +162,7 @@ module tb;
 
         //--------------------------------------------------------------------
 
-        $display ("%s PASS", `__FILE__);
+        $display ("PASS %s ", `__FILE__);
         $finish;
     end
 

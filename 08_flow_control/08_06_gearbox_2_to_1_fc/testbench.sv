@@ -75,7 +75,8 @@ module testbench;
               order <= 1'b1;
               count_token = count_token + 1;
               expected_token =  queue_tokens.pop_back();
-              if (~({first_part, out_token} === expected_token)) begin
+              tmp_token = {first_part, out_token};
+              if (~(tmp_token === expected_token)) begin
                 $display("FAIL %s", `__FILE__);
                 $display("unexpected token  %b expected %b", tmp_token, expected_token);
                 $display("Number token  %d ", count_token);
